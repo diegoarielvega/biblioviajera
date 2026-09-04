@@ -6,222 +6,479 @@
 <title>Biblioteca Viajera — Catálogo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
-    --bg: #F7F4EC;
-    --panel: #FFFFFF;
-    --line: #E7E1D2;
-    --ink: #2B2A27;
-    --ink-soft: #6B675E;
-    --ink-faint: #9B968A;
-    --accent: #8A4B3B;      /* terracota, para chips activos y links */
-    --ring: #6B4E8E;        /* violeta, para el libro seleccionado */
-    --radius: 10px;
-
-    --c1: #7C93A8; /* azul polvo */
-    --c2: #B08199; /* malva */
-    --c3: #7C9A85; /* salvia */
-    --c4: #6B5B8C; /* violeta */
-    --c5: #C98A5E; /* terracota claro */
-    --c6: #6E8FA6; /* azul grisáceo */
+    --paper: #EFE7D2;
+    --paper-dark: #E3D8BC;
+    --paper-darker: #D8CAA6;
+    --ink: #2A2420;
+    --ink-soft: #5C5346;
+    --ink-faint: #8A806F;
+    --brass: #96702E;
+    --brass-light: #B08B44;
+    --stamp: #9B3B30;
+    --teal: #2F5C56;
+    --shadow: rgba(42,36,32,0.18);
+    --radius: 3px;
   }
 
   *{box-sizing:border-box;}
 
   html,body{
-    margin:0; padding:0;
-    background:var(--bg);
+    margin:0;
+    padding:0;
+    background:
+      radial-gradient(ellipse at top left, rgba(150,112,46,0.06), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(47,92,86,0.05), transparent 55%),
+      var(--paper);
     color:var(--ink);
-    font-family:'Inter', -apple-system, Helvetica, Arial, sans-serif;
+    font-family:'Source Serif 4', Georgia, serif;
     min-height:100vh;
   }
 
-  .wrap{ max-width:1180px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+  /* subtle paper grain */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    opacity:0.35;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(42,36,32,0.015) 0px, rgba(42,36,32,0.015) 1px, transparent 1px, transparent 3px);
+    z-index:0;
+  }
 
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding:2.5rem 1.5rem 5rem;
+  }
+
+  /* ---------- Header ---------- */
   header{
-    display:flex; align-items:flex-start; justify-content:space-between;
-    gap:1rem; margin-bottom:1.4rem;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:1rem;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:1.1rem;
+    margin-bottom:0.4rem;
+  }
+
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:0.6rem;
+  }
+
+  .brand-mark{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    letter-spacing:0.16em;
+    color:var(--stamp);
+    border:1px solid var(--stamp);
+    padding:0.15rem 0.4rem;
+    border-radius:2px;
+    transform:rotate(-3deg);
+    white-space:nowrap;
   }
 
   h1{
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size:1.6rem;
+    font-size:clamp(2rem, 4.5vw, 3.1rem);
     margin:0;
+    letter-spacing:-0.01em;
+    line-height:1;
   }
 
-  .subcount{ font-size:0.85rem; color:var(--ink-soft); margin-top:0.2rem; }
-
-  .gear-btn{
-    width:2.3rem; height:2.3rem; border-radius:50%;
-    border:1px solid var(--line); background:var(--panel);
-    color:var(--ink-soft); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    flex:0 0 auto;
+  .tagline{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.8rem;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
   }
-  .gear-btn:hover{ color:var(--ink); border-color:var(--ink-faint); }
-  .gear-btn svg{ width:18px; height:18px; }
+
+  #count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    padding-bottom:0.2rem;
+  }
 
   /* ---------- Search ---------- */
-  .search-row{ position:relative; margin-bottom:1rem; }
-  .search-row svg{
-    position:absolute; left:0.9rem; top:50%; transform:translateY(-50%);
-    width:17px; height:17px; stroke:var(--ink-faint); pointer-events:none;
+  .search-row{
+    margin:1.8rem 0 2.2rem;
+    position:relative;
   }
-  #search{
-    width:100%; font-family:inherit; font-size:0.95rem;
-    padding:0.75rem 1rem 0.75rem 2.6rem;
-    background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--radius); color:var(--ink); outline:none;
-    transition:border-color .15s ease, box-shadow .15s ease;
-  }
-  #search::placeholder{ color:var(--ink-faint); }
-  #search:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(138,75,59,0.12); }
 
-  /* ---------- Chips ---------- */
-  .chips-row{
-    display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1.6rem;
+  .search-row svg{
+    position:absolute;
+    left:0.9rem;
+    top:50%;
+    transform:translateY(-50%);
+    width:18px;
+    height:18px;
+    stroke:var(--ink-soft);
+    pointer-events:none;
   }
-  .chip{
-    font-family:inherit; font-size:0.78rem; font-weight:500;
-    padding:0.4rem 0.85rem; border-radius:999px;
-    background:var(--panel); border:1px solid var(--line);
-    color:var(--ink-soft); cursor:pointer;
-    white-space:nowrap;
-    transition:all .12s ease;
+
+  #search{
+    width:100%;
+    font-family:'Source Serif 4', serif;
+    font-size:1.05rem;
+    font-style:italic;
+    padding:0.85rem 1rem 0.85rem 2.7rem;
+    background:var(--paper-dark);
+    border:1px solid var(--paper-darker);
+    border-bottom:2px solid var(--ink);
+    border-radius:var(--radius);
+    color:var(--ink);
+    outline:none;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .chip:hover{ border-color:var(--ink-faint); color:var(--ink); }
-  .chip.active{
-    background:var(--accent); border-color:var(--accent); color:#fff;
+
+  #search::placeholder{color:var(--ink-faint);}
+
+  #search:focus{
+    border-color:var(--brass);
+    box-shadow:0 0 0 3px rgba(150,112,46,0.18);
   }
 
   /* ---------- Carousel ---------- */
-  .carousel-shell{ position:relative; }
-  .carousel{
-    display:flex; gap:1.3rem; overflow-x:auto;
-    scroll-snap-type:x proximity; padding:0.3rem 0.1rem 0.7rem;
-    scrollbar-width:thin; scrollbar-color:var(--ink-faint) transparent;
+  .carousel-shell{
+    position:relative;
   }
-  .carousel::-webkit-scrollbar{ height:5px; }
-  .carousel::-webkit-scrollbar-thumb{ background:var(--ink-faint); border-radius:4px; }
+
+  .carousel{
+    display:flex;
+    gap:1.6rem;
+    overflow-x:auto;
+    scroll-snap-type:x proximity;
+    padding:0.6rem 0.2rem 1.4rem;
+    scrollbar-width:thin;
+    scrollbar-color:var(--brass-light) transparent;
+  }
+
+  .carousel::-webkit-scrollbar{height:6px;}
+  .carousel::-webkit-scrollbar-thumb{background:var(--brass-light); border-radius:4px;}
 
   .book-card{
-    scroll-snap-align:start; flex:0 0 auto; width:150px;
-    cursor:pointer; border:none; background:none; padding:0; text-align:left;
+    scroll-snap-align:start;
+    flex:0 0 auto;
+    width:150px;
+    cursor:pointer;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:0;
+    font-family:inherit;
+    color:inherit;
+    position:relative;
   }
 
   .cover-frame{
-    position:relative; width:150px; height:225px; border-radius:var(--radius);
-    overflow:hidden; box-shadow:0 4px 10px rgba(43,42,39,0.1);
-    border:2px solid transparent; transition:transform .15s ease, border-color .15s ease;
-    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    width:150px;
+    height:225px;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--paper-darker);
+    box-shadow:0 5px 14px var(--shadow);
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
   }
-  .book-card:hover .cover-frame{ transform:translateY(-3px); }
-  .book-card.selected .cover-frame{ border-color:var(--ring); box-shadow:0 6px 16px rgba(107,78,142,0.28); }
 
-  .cover-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-  .cover-fallback{
-    width:100%; height:100%; padding:1.1rem; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; text-align:center; color:#fff;
+  .book-card:hover .cover-frame,
+  .book-card:focus-visible .cover-frame{
+    transform:translateY(-5px) rotate(-0.6deg);
+    box-shadow:0 12px 22px var(--shadow);
   }
-  .cover-fallback .ft{ font-size:0.92rem; font-weight:600; line-height:1.25; }
-  .cover-fallback .fdiv{ width:26px; height:1px; background:rgba(255,255,255,0.55); margin:0.55rem 0; }
-  .cover-fallback .fa{ font-size:0.76rem; opacity:0.9; }
 
-  .book-caption{ margin-top:0.5rem; }
-  .book-caption .t{
-    font-size:0.85rem; font-weight:600; display:block;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  .cover-frame img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
   }
-  .book-caption .a{
-    font-size:0.76rem; color:var(--ink-soft); display:block;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+
+  .cover-frame .no-cover{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0.8rem;
+    text-align:center;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    background:
+      repeating-linear-gradient(135deg, var(--paper-darker), var(--paper-darker) 8px, var(--paper-dark) 8px, var(--paper-dark) 16px);
+  }
+
+  .tag{
+    position:absolute;
+    top:-8px;
+    right:8px;
+    background:var(--stamp);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.62rem;
+    letter-spacing:0.03em;
+    padding:0.18rem 0.4rem;
+    border-radius:2px;
+    transform:rotate(4deg);
+    box-shadow:0 2px 5px var(--shadow);
+    max-width:80px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .book-meta{
+    margin-top:0.65rem;
+    line-height:1.25;
+  }
+
+  .book-meta .t{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:0.92rem;
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .book-meta .a{
+    font-size:0.8rem;
+    font-style:italic;
+    color:var(--ink-soft);
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
 
   .nav-btn{
-    position:absolute; top:38%; transform:translateY(-50%);
-    width:2.2rem; height:2.2rem; border-radius:50%;
-    border:1px solid var(--line); background:var(--panel); color:var(--ink);
-    font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
-    z-index:2; box-shadow:0 2px 6px rgba(43,42,39,0.12);
+    position:absolute;
+    top:38%;
+    transform:translateY(-50%);
+    width:2.4rem;
+    height:2.4rem;
+    border-radius:50%;
+    border:1px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    font-size:1.1rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    box-shadow:0 3px 8px var(--shadow);
   }
-  .nav-btn:hover{ background:var(--ink); color:#fff; border-color:var(--ink); }
-  .nav-prev{ left:-1.1rem; } .nav-next{ right:-1.1rem; }
-  @media (max-width:640px){ .nav-btn{ display:none; } }
+  .nav-btn:hover{background:var(--ink); color:var(--paper);}
+  .nav-prev{left:-1.2rem;}
+  .nav-next{right:-1.2rem;}
 
-  /* ---------- Dots ---------- */
-  .dots{ display:flex; justify-content:center; gap:0.4rem; margin:0.7rem 0 1.8rem; }
-  .dot{
-    width:7px; height:7px; border-radius:50%; background:var(--line);
-    border:none; cursor:pointer; padding:0;
-  }
-  .dot.active{ background:var(--accent); width:16px; border-radius:4px; }
-
-  /* ---------- Detail panel ---------- */
-  .detail-panel{
-    display:flex; gap:1.6rem; flex-wrap:wrap;
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:1.6rem; margin-bottom:1rem;
-  }
-  .detail-cover{
-    flex:0 0 auto; width:110px; height:165px; border-radius:8px; overflow:hidden;
-    box-shadow:0 4px 10px rgba(43,42,39,0.12);
-  }
-  .detail-cover img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .detail-info{ flex:1 1 320px; min-width:0; }
-  .detail-info h2{ font-size:1.35rem; margin:0 0 0.15rem; font-weight:700; }
-  .detail-info .author{ color:var(--accent); font-weight:500; margin-bottom:0.9rem; }
-
-  .detail-fields{ display:grid; grid-template-columns:auto 1fr; gap:0.35rem 0.9rem; font-size:0.86rem; margin-bottom:0.9rem; }
-  .detail-fields dt{ color:var(--ink-faint); text-transform:uppercase; font-size:0.72rem; letter-spacing:0.04em; font-weight:600; align-self:center; }
-  .detail-fields dd{ margin:0; color:var(--ink); }
-
-  .detail-synopsis{ font-size:0.92rem; line-height:1.55; color:var(--ink); margin-bottom:0.9rem; }
-
-  .detail-tags{ display:flex; flex-wrap:wrap; gap:0.4rem; }
-  .detail-tags span{
-    font-size:0.72rem; padding:0.28rem 0.6rem; border-radius:999px;
-    background:var(--bg); border:1px solid var(--line); color:var(--ink-soft);
+  @media (max-width: 640px){
+    .nav-btn{display:none;}
   }
 
-  /* ---------- States ---------- */
-  .state-box{ text-align:center; padding:3rem 1rem; color:var(--ink-soft); }
-  .state-box .glyph{ font-weight:600; color:var(--ink); display:block; margin-bottom:0.3rem; font-size:1.05rem; }
+  /* ---------- Empty / loading / error states ---------- */
+  .state-box{
+    text-align:center;
+    padding:3.5rem 1rem;
+    color:var(--ink-soft);
+  }
+  .state-box .glyph{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.5rem;
+    color:var(--ink);
+    display:block;
+    margin-bottom:0.4rem;
+  }
   .state-box code{
-    display:block; margin-top:0.9rem; font-family:ui-monospace, monospace; font-size:0.76rem;
-    background:var(--panel); border:1px solid var(--line); padding:0.8rem 1rem; border-radius:8px;
-    max-width:560px; margin-inline:auto; text-align:left; line-height:1.6; white-space:pre-wrap;
+    display:block;
+    margin-top:0.9rem;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem;
+    background:var(--paper-dark);
+    padding:0.8rem 1rem;
+    border-radius:var(--radius);
+    max-width:560px;
+    margin-inline:auto;
+    text-align:left;
+    line-height:1.6;
+    white-space:pre-wrap;
+  }
+
+  /* ---------- Detail overlay ---------- */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,17,14,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1.5rem;
+    z-index:50;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease;
+  }
+  .overlay.open{opacity:1; pointer-events:auto;}
+
+  .index-card{
+    position:relative;
+    background:var(--paper-dark);
+    border:1px solid var(--paper-darker);
+    border-radius:6px;
+    max-width:680px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    padding:2.2rem 2rem 2rem;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    transform:translateY(14px) scale(0.98);
+    transition:transform 0.22s ease;
+  }
+  .overlay.open .index-card{transform:translateY(0) scale(1);}
+
+  .punch-holes{
+    position:absolute;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:2.2rem;
+  }
+  .punch-holes span{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--paper);
+    box-shadow:inset 0 2px 3px rgba(0,0,0,0.25);
+  }
+
+  .close-btn{
+    position:absolute;
+    top:1rem;
+    right:1rem;
+    width:2.1rem;
+    height:2.1rem;
+    border-radius:50%;
+    border:1px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    font-size:1.1rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  .close-btn:hover{background:var(--ink); color:var(--paper);}
+
+  .card-body{
+    display:flex;
+    gap:1.6rem;
+    margin-top:1.6rem;
+    flex-wrap:wrap;
+  }
+
+  .card-cover{
+    flex:0 0 auto;
+    width:140px;
+    height:210px;
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:0 8px 20px var(--shadow);
+    background:var(--paper-darker);
+  }
+  .card-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  .card-info{flex:1 1 260px; min-width:0;}
+
+  .card-info h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:1.5rem;
+    margin:0 0 0.15rem;
+    line-height:1.1;
+  }
+
+  .card-info .author{
+    font-style:italic;
+    color:var(--ink-soft);
+    font-size:1rem;
+    margin-bottom:0.9rem;
+  }
+
+  .fields{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.76rem;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:0.4rem 0.7rem;
+    color:var(--ink-soft);
+  }
+  .fields dt{text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint);}
+  .fields dd{margin:0; color:var(--ink); border-bottom:1px dashed var(--paper-darker); padding-bottom:0.3rem;}
+
+  .location-tag{
+    display:inline-block;
+    margin-top:1rem;
+    background:var(--teal);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.72rem;
+    padding:0.3rem 0.6rem;
+    border-radius:2px;
+  }
+
+  .synopsis{
+    margin-top:1.4rem;
+    padding-top:1.1rem;
+    border-top:1px dashed var(--paper-darker);
+    font-size:0.98rem;
+    line-height:1.6;
+    color:var(--ink);
+  }
+  .synopsis .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-faint);
+    display:block;
+    margin-bottom:0.4rem;
   }
 
   footer{
-    text-align:center; margin-top:2.5rem; padding-top:1.4rem; border-top:1px solid var(--line);
-    font-size:0.85rem; color:var(--ink-soft);
+    text-align:center;
+    margin-top:3rem;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    color:var(--ink-faint);
+    letter-spacing:0.04em;
   }
 
-  /* ---------- Help overlay (para el administrador) ---------- */
-  .overlay{
-    position:fixed; inset:0; background:rgba(20,17,14,0.45);
-    display:flex; align-items:center; justify-content:center; padding:1.5rem;
-    z-index:50; opacity:0; pointer-events:none; transition:opacity .18s ease;
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
   }
-  .overlay.open{ opacity:1; pointer-events:auto; }
-  .help-card{
-    background:var(--panel); border-radius:12px; max-width:460px; width:100%;
-    padding:1.8rem; position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.25);
-  }
-  .help-card h3{ margin:0 0 0.8rem; font-size:1.1rem; }
-  .help-card p{ font-size:0.88rem; line-height:1.55; color:var(--ink-soft); margin:0 0 0.7rem; }
-  .help-card a{ color:var(--accent); }
-  .help-close{
-    position:absolute; top:0.9rem; right:0.9rem; width:1.9rem; height:1.9rem;
-    border-radius:50%; border:1px solid var(--line); background:transparent; cursor:pointer;
-  }
-  .help-close:hover{ background:var(--bg); }
 
-  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap;
+  }
 </style>
 </head>
 <body>
@@ -230,12 +487,13 @@
 
   <header>
     <div>
-      <h1>Biblioteca Viajera</h1>
-      <div class="subcount" id="count"></div>
+      <div class="brand">
+        <span class="brand-mark">EX LIBRIS</span>
+        <h1>Biblioteca Viajera</h1>
+      </div>
+      <div class="tagline">catálogo de a bordo</div>
     </div>
-    <button class="gear-btn" id="helpBtn" aria-label="Cómo editar este catálogo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
+    <div id="count"></div>
   </header>
 
   <div class="search-row">
@@ -244,112 +502,89 @@
     <input id="search" type="text" placeholder="Buscar por título o autor…" autocomplete="off">
   </div>
 
-  <div class="chips-row" id="chips"></div>
-
   <div class="carousel-shell">
     <button class="nav-btn nav-prev" id="prevBtn" aria-label="Desplazar hacia atrás">‹</button>
     <div class="carousel" id="carousel" role="list"></div>
     <button class="nav-btn nav-next" id="nextBtn" aria-label="Desplazar hacia adelante">›</button>
   </div>
-  <div class="dots" id="dots"></div>
 
   <div id="stateBox"></div>
-  <div class="detail-panel" id="detailPanel" style="display:none;"></div>
 
-  <footer id="footerText"></footer>
+  <footer>biblioteca viajera · catálogo generado automáticamente desde el archivo</footer>
 </div>
 
-<div class="overlay" id="helpOverlay">
-  <div class="help-card">
-    <button class="help-close" id="helpClose" aria-label="Cerrar">×</button>
-    <h3>Cómo editar este catálogo</h3>
-    <p>Este catálogo no tiene base de datos propia: lee en vivo el Google Sheet de la Biblioteca Viajera. Para agregar, quitar o corregir un libro, editá directamente la planilla — no hace falta tocar ningún código.</p>
-    <p>Los cambios se ven la próxima vez que alguien abra esta página (puede tardar unos minutos en reflejarse por el cacheo de Google).</p>
-    <p id="editLinkWrap"></p>
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="index-card" id="indexCard">
+    <div class="punch-holes"><span></span><span></span></div>
+    <button class="close-btn" id="closeBtn" aria-label="Cerrar ficha">×</button>
+    <div class="card-body" id="cardBody"></div>
   </div>
 </div>
 
 <script>
 /* =========================================================
    CONFIGURACIÓN
+   Pegá acá la URL de tu Google Sheet publicado como CSV:
+   Archivo > Compartir > Publicar en la web > selecciona la
+   hoja > formato CSV > Publicar. Copiá esa URL acá abajo.
    ========================================================= */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSHuwSgfsqvtnOud-1NRgQ7Qg-ngpYvlYHbD6L0WZmsGyfqE6lIkYAlHDAooR9NA9dSwQI1w_G3TWrU/pub?gid=0&single=true&output=csv";
 
-// Opcional: pegá acá el link de EDICIÓN de tu Google Sheet (el que termina
-// en /edit) para que el botón de ayuda del administrador lo muestre.
-// Dejalo vacío ("") si no querés mostrar el link.
-const SHEET_EDIT_URL = "";
-
-// Texto libre del pie de página.
-const FOOTER_TEXT = "Biblioteca Viajera · catálogo de libros de la colección";
-
-// Cuántas etiquetas (chips) mostrar como máximo, ordenadas por frecuencia.
-const MAX_CHIPS = 16;
-
 /* ========================================================= */
-
-const PALETA = ['c1','c2','c3','c4','c5','c6'];
 
 const el = {
   carousel: document.getElementById('carousel'),
   search: document.getElementById('search'),
   count: document.getElementById('count'),
   stateBox: document.getElementById('stateBox'),
-  chips: document.getElementById('chips'),
-  dots: document.getElementById('dots'),
-  detailPanel: document.getElementById('detailPanel'),
+  overlay: document.getElementById('overlay'),
+  indexCard: document.getElementById('indexCard'),
+  cardBody: document.getElementById('cardBody'),
+  closeBtn: document.getElementById('closeBtn'),
   prevBtn: document.getElementById('prevBtn'),
   nextBtn: document.getElementById('nextBtn'),
-  helpBtn: document.getElementById('helpBtn'),
-  helpOverlay: document.getElementById('helpOverlay'),
-  helpClose: document.getElementById('helpClose'),
-  editLinkWrap: document.getElementById('editLinkWrap'),
-  footerText: document.getElementById('footerText'),
 };
 
 let LIBROS = [];
 let VISIBLES = [];
-let CHIPS_ACTIVOS = new Set();
-let SELECCIONADO = -1;
 
 function normalizar(str){
-  return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  return (str || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 }
-function indiceColumna(mapaHeaders, ...nombresPosibles){
-  for(const nombre of nombresPosibles){
-    const clave = normalizar(nombre);
-    if(clave in mapaHeaders) return mapaHeaders[clave];
-  }
-  return -1;
+
+function campo(row, nombre){
+  // Busca la columna sin importar mayúsculas/acentos exactos
+  const claves = Object.keys(row);
+  const objetivo = normalizar(nombre);
+  const encontrada = claves.find(k => normalizar(k) === objetivo);
+  return encontrada ? (row[encontrada] || '').toString().trim() : '';
 }
-function valorEn(fila, indice){
-  if(indice < 0 || indice >= fila.length) return '';
-  return (fila[indice] || '').toString().trim();
+
+function renderState(html){
+  el.stateBox.innerHTML = html;
 }
-function detectarPortadaYEstado(fila){
-  let portada = '', estado = '';
-  for(const celdaRaw of fila){
-    const celda = (celdaRaw || '').toString().trim();
-    if(!celda) continue;
-    if(!portada && /^https?:\/\//i.test(celda)) portada = celda;
-    else if(!estado && /^(ok\b|no encontrada|error)/i.test(celda)) estado = celda;
-  }
-  return {portada, estado};
+
+function clearState(){
+  el.stateBox.innerHTML = '';
 }
-function tagsDe(libro){
-  return (libro.descriptores || '')
-    .split(/[;,]/)
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-function renderState(html){ el.stateBox.innerHTML = html; }
-function clearState(){ el.stateBox.innerHTML = ''; }
 
 async function cargarDatos(){
   if(!CSV_URL || CSV_URL.indexOf('PEGA_AQUI') !== -1){
-    renderState(`<div class="state-box"><span class="glyph">Todavía no configuraste la fuente de datos</span>Reemplazá CSV_URL en el archivo por la URL de tu Google Sheet publicado como CSV.</div>`);
+    renderState(`
+      <div class="state-box">
+        <span class="glyph">Todavía no configuraste la fuente de datos</span>
+        Abrí este archivo con un editor de texto y reemplazá <strong>CSV_URL</strong>
+        por la URL de tu Google Sheet publicado como CSV.
+        <code>Archivo → Compartir → Publicar en la web → elegí la hoja → formato CSV → Publicar</code>
+      </div>`);
     return;
   }
+
   renderState(`<div class="state-box"><span class="glyph">Buscando en el archivo…</span>cargando el catálogo</div>`);
 
   try{
@@ -357,47 +592,8 @@ async function cargarDatos(){
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const texto = await res.text();
 
-    const parsed = Papa.parse(texto, {header:false, skipEmptyLines:true});
-    const filas = parsed.data;
-    if(filas.length < 2){
-      renderState(`<div class="state-box"><span class="glyph">El catálogo está vacío</span>no encontramos libros en la hoja publicada.</div>`);
-      return;
-    }
-
-    const headerRow = filas[0];
-    const mapaHeaders = {};
-    headerRow.forEach((h, i) => { const clave = normalizar(h); if(clave) mapaHeaders[clave] = i; });
-
-    const iTitulo = indiceColumna(mapaHeaders, 'Título', 'titulo');
-    const iAutor = indiceColumna(mapaHeaders, 'Autor');
-    const iLugar = indiceColumna(mapaHeaders, 'Lugar');
-    const iEditorial = indiceColumna(mapaHeaders, 'Editorial');
-    const iAnio = indiceColumna(mapaHeaders, 'Año', 'anio', 'ano');
-    const iPaginas = indiceColumna(mapaHeaders, 'Páginas', 'paginas');
-    const iSerie = indiceColumna(mapaHeaders, 'Serie');
-    const iUbicacion = indiceColumna(mapaHeaders, 'Ubicación', 'ubicacion');
-    const iSinopsis = indiceColumna(mapaHeaders, 'Sinopsis');
-    const iDescriptores = indiceColumna(mapaHeaders, 'Descriptores', 'descriptores', 'tags', 'genero');
-
-    LIBROS = filas.slice(1)
-      .filter(fila => valorEn(fila, iTitulo))
-      .map((fila, i) => {
-        const { portada, estado } = detectarPortadaYEstado(fila);
-        return {
-          titulo: valorEn(fila, iTitulo),
-          autor: valorEn(fila, iAutor),
-          lugar: valorEn(fila, iLugar),
-          editorial: valorEn(fila, iEditorial),
-          anio: valorEn(fila, iAnio),
-          paginas: valorEn(fila, iPaginas),
-          serie: valorEn(fila, iSerie),
-          ubicacion: valorEn(fila, iUbicacion),
-          sinopsis: valorEn(fila, iSinopsis),
-          descriptores: valorEn(fila, iDescriptores),
-          portada, estado,
-          color: PALETA[i % PALETA.length],
-        };
-      });
+    const parsed = Papa.parse(texto, {header:true, skipEmptyLines:true});
+    LIBROS = parsed.data.filter(r => campo(r,'Título'));
 
     if(LIBROS.length === 0){
       renderState(`<div class="state-box"><span class="glyph">El catálogo está vacío</span>no encontramos libros en la hoja publicada.</div>`);
@@ -405,158 +601,115 @@ async function cargarDatos(){
     }
 
     clearState();
-    renderChips();
     aplicarFiltro('');
   }catch(err){
     renderState(`
       <div class="state-box">
         <span class="glyph">No pudimos abrir el catálogo</span>
-        Revisá que la URL de CSV_URL sea la de una hoja <strong>publicada</strong> (no la de edición) y que el archivo se esté sirviendo por https:// (no funciona con doble clic local).
+        Revisá que la URL de CSV_URL sea la de una hoja <strong>publicada</strong> (no la de edición)
+        y que tenga acceso "cualquier persona con el enlace".
         <code>${err.message}</code>
       </div>`);
   }
 }
 
-function renderChips(){
-  const frecuencia = {};
-  LIBROS.forEach(libro => {
-    tagsDe(libro).forEach(tag => {
-      const clave = tag; // conservamos el texto original para mostrar
-      frecuencia[clave] = (frecuencia[clave] || 0) + 1;
-    });
-  });
-
-  const top = Object.entries(frecuencia)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0, MAX_CHIPS)
-    .map(([tag]) => tag);
-
-  el.chips.innerHTML = '';
-  top.forEach(tag => {
-    const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = tag;
-    btn.addEventListener('click', () => {
-      if(CHIPS_ACTIVOS.has(tag)) CHIPS_ACTIVOS.delete(tag);
-      else CHIPS_ACTIVOS.add(tag);
-      btn.classList.toggle('active');
-      aplicarFiltro(el.search.value);
-    });
-    el.chips.appendChild(btn);
-  });
-}
-
 function aplicarFiltro(q){
   const query = normalizar(q);
-  VISIBLES = LIBROS.filter(libro => {
-    const coincideTexto = !query || normalizar(libro.titulo).includes(query) || normalizar(libro.autor).includes(query);
-    const coincideChips = CHIPS_ACTIVOS.size === 0 || tagsDe(libro).some(t => CHIPS_ACTIVOS.has(t));
-    return coincideTexto && coincideChips;
+  VISIBLES = !query ? LIBROS : LIBROS.filter(r => {
+    return normalizar(campo(r,'Título')).includes(query) || normalizar(campo(r,'Autor')).includes(query);
   });
 
-  const totalTxt = LIBROS.length + ' título' + (LIBROS.length===1?'':'s');
-  el.count.textContent = (query || CHIPS_ACTIVOS.size) ? `${VISIBLES.length} de ${totalTxt}` : totalTxt;
-
+  el.count.textContent = LIBROS.length + (query ? ` · ${VISIBLES.length} coinciden` : ' volúmenes');
   renderCarrusel();
 }
 
 function renderCarrusel(){
   el.carousel.innerHTML = '';
-  el.dots.innerHTML = '';
 
   if(VISIBLES.length === 0){
-    el.detailPanel.style.display = 'none';
-    renderState(`<div class="state-box"><span class="glyph">Sin resultados</span>No encontramos libros con esos filtros. Probá con otro título, autor o etiqueta.</div>`);
+    renderState(`<div class="state-box"><span class="glyph">Sin resultados</span>No encontramos libros con esos términos. Probá con otro título o autor.</div>`);
     return;
   }
   clearState();
 
-  VISIBLES.forEach((libro, i) => {
+  VISIBLES.forEach((row, i) => {
+    const titulo = campo(row,'Título');
+    const autor = campo(row,'Autor');
+    const portada = campo(row,'Portada URL');
+    const ubicacion = campo(row,'Ubicación');
+
     const card = document.createElement('button');
     card.className = 'book-card';
     card.setAttribute('role','listitem');
-    card.setAttribute('aria-label', libro.titulo + (libro.autor ? ', de ' + libro.autor : ''));
+    card.setAttribute('aria-label', titulo + (autor ? ', de ' + autor : ''));
 
     card.innerHTML = `
-      <div class="cover-frame" style="background:var(--${libro.color})">
-        ${libro.portada
-          ? `<img src="${libro.portada}" alt="Portada de ${libro.titulo}" loading="lazy">`
-          : `<div class="cover-fallback"><span class="ft">${libro.titulo}</span><span class="fdiv"></span><span class="fa">${libro.autor || ''}</span></div>`}
+      <div class="cover-frame">
+        ${ubicacion ? `<span class="tag" title="${ubicacion}">${ubicacion}</span>` : ''}
+        ${portada ? `<img src="${portada}" alt="Portada de ${titulo}" loading="lazy">` : `<div class="no-cover">${titulo}</div>`}
       </div>
-      <div class="book-caption">
-        <span class="t">${libro.titulo}</span>
-        <span class="a">${libro.autor || 'Autor desconocido'}</span>
+      <div class="book-meta">
+        <span class="t">${titulo}</span>
+        <span class="a">${autor || 'Autor desconocido'}</span>
       </div>
     `;
-    card.addEventListener('click', () => seleccionar(i));
+
+    card.addEventListener('click', () => abrirFicha(row));
     el.carousel.appendChild(card);
   });
-
-  if(VISIBLES.length <= 12){
-    VISIBLES.forEach((_, i) => {
-      const d = document.createElement('button');
-      d.className = 'dot';
-      d.setAttribute('aria-label', 'Ir al libro ' + (i+1));
-      d.addEventListener('click', () => seleccionar(i));
-      el.dots.appendChild(d);
-    });
-  }
-
-  seleccionar(0);
 }
 
-function seleccionar(indice){
-  SELECCIONADO = indice;
-  const libro = VISIBLES[indice];
-  if(!libro) return;
+function abrirFicha(row){
+  const titulo = campo(row,'Título');
+  const autor = campo(row,'Autor');
+  const editorial = campo(row,'Editorial');
+  const lugar = campo(row,'Lugar');
+  const anio = campo(row,'Año');
+  const paginas = campo(row,'Páginas');
+  const serie = campo(row,'Serie');
+  const ubicacion = campo(row,'Ubicación');
+  const sinopsis = campo(row,'Sinopsis');
+  const portada = campo(row,'Portada URL');
 
-  [...el.carousel.children].forEach((card, i) => card.classList.toggle('selected', i === indice));
-  [...el.dots.children].forEach((dot, i) => dot.classList.toggle('active', i === indice));
-
-  const tarjetaSel = el.carousel.children[indice];
-  if(tarjetaSel) tarjetaSel.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
-
-  const tags = tagsDe(libro);
-
-  el.detailPanel.style.display = 'flex';
-  el.detailPanel.innerHTML = `
-    <div class="detail-cover" style="background:var(--${libro.color})">
-      ${libro.portada ? `<img src="${libro.portada}" alt="Portada de ${libro.titulo}">` : ''}
+  el.cardBody.innerHTML = `
+    <div class="card-cover">
+      ${portada ? `<img src="${portada}" alt="Portada de ${titulo}">` : `<div class="no-cover" style="height:100%">${titulo}</div>`}
     </div>
-    <div class="detail-info">
-      <h2>${libro.titulo}</h2>
-      <div class="author">${libro.autor || 'Autor desconocido'}</div>
-      <dl class="detail-fields">
-        ${libro.editorial ? `<dt>Editorial</dt><dd>${libro.editorial}</dd>` : ''}
-        ${libro.lugar ? `<dt>Lugar</dt><dd>${libro.lugar}</dd>` : ''}
-        ${libro.anio ? `<dt>Año</dt><dd>${libro.anio}</dd>` : ''}
-        ${libro.paginas ? `<dt>Páginas</dt><dd>${libro.paginas}</dd>` : ''}
-        ${libro.ubicacion ? `<dt>Ubicación</dt><dd>${libro.ubicacion}</dd>` : ''}
+    <div class="card-info">
+      <h2>${titulo}</h2>
+      <div class="author">${autor || 'Autor desconocido'}</div>
+      <dl class="fields">
+        ${editorial ? `<dt>Editorial</dt><dd>${editorial}</dd>` : ''}
+        ${lugar ? `<dt>Lugar</dt><dd>${lugar}</dd>` : ''}
+        ${anio ? `<dt>Año</dt><dd>${anio}</dd>` : ''}
+        ${paginas ? `<dt>Páginas</dt><dd>${paginas}</dd>` : ''}
+        ${serie ? `<dt>Serie</dt><dd>${serie}</dd>` : ''}
       </dl>
-      ${libro.sinopsis ? `<div class="detail-synopsis">${libro.sinopsis}</div>` : ''}
-      ${tags.length ? `<div class="detail-tags">${tags.map(t => `<span>${t}</span>`).join('')}</div>` : ''}
+      ${ubicacion ? `<span class="location-tag">◆ ${ubicacion}</span>` : ''}
+      ${sinopsis ? `<div class="synopsis"><span class="label">Sinopsis</span>${sinopsis}</div>` : ''}
     </div>
   `;
+
+  el.overlay.classList.add('open');
+  el.closeBtn.focus();
 }
 
-/* ---------- Eventos ---------- */
+function cerrarFicha(){
+  el.overlay.classList.remove('open');
+}
+
+el.closeBtn.addEventListener('click', cerrarFicha);
+el.overlay.addEventListener('click', (e) => { if(e.target === el.overlay) cerrarFicha(); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') cerrarFicha(); });
+
 el.search.addEventListener('input', (e) => aplicarFiltro(e.target.value));
-el.prevBtn.addEventListener('click', () => el.carousel.scrollBy({left:-380, behavior:'smooth'}));
-el.nextBtn.addEventListener('click', () => el.carousel.scrollBy({left:380, behavior:'smooth'}));
 
-el.helpBtn.addEventListener('click', () => el.helpOverlay.classList.add('open'));
-el.helpClose.addEventListener('click', () => el.helpOverlay.classList.remove('open'));
-el.helpOverlay.addEventListener('click', (e) => { if(e.target === el.helpOverlay) el.helpOverlay.classList.remove('open'); });
-document.addEventListener('keydown', (e) => { if(e.key === 'Escape') el.helpOverlay.classList.remove('open'); });
-
-el.editLinkWrap.innerHTML = SHEET_EDIT_URL
-  ? `<a href="${SHEET_EDIT_URL}" target="_blank" rel="noopener">Abrir el Google Sheet para editar →</a>`
-  : `Pedile a quien administra el catálogo el link del Google Sheet de origen.`;
-
-el.footerText.textContent = FOOTER_TEXT;
+el.prevBtn.addEventListener('click', () => el.carousel.scrollBy({left:-420, behavior:'smooth'}));
+el.nextBtn.addEventListener('click', () => el.carousel.scrollBy({left:420, behavior:'smooth'}));
 
 cargarDatos();
 </script>
 
 </body>
 </html>
+
