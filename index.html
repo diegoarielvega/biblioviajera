@@ -72,7 +72,7 @@
 
   /* ---------- Chips ---------- */
   .chips-row{
-    display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1.6rem;
+    display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:1.6rem;
   }
   .chip{
     font-family:inherit; font-size:0.78rem; font-weight:500;
@@ -86,6 +86,59 @@
   .chip.active{
     background:var(--accent); border-color:var(--accent); color:#fff;
   }
+  .chip.chip-active-tag{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+    display:inline-flex; align-items:center; gap:0.35rem;
+  }
+  .chip-active-tag .x{ font-weight:700; }
+  .chip-more{
+    display:inline-flex; align-items:center; gap:0.35rem;
+    border-style:dashed;
+  }
+  .chip-more svg{ width:13px; height:13px; }
+
+  /* ---------- Modal de descriptores ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,17,14,0.45);
+    display:flex; align-items:center; justify-content:center; padding:1.5rem;
+    z-index:60; opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .tags-modal{
+    background:var(--panel); border-radius:12px; max-width:560px; width:100%;
+    max-height:80vh; display:flex; flex-direction:column;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  }
+  .tags-modal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.2rem 1.4rem 0.9rem; border-bottom:1px solid var(--line);
+  }
+  .tags-modal-header h3{ margin:0; font-size:1.05rem; }
+  .tags-modal-close{
+    width:1.9rem; height:1.9rem; border-radius:50%;
+    border:1px solid var(--line); background:transparent; cursor:pointer; font-size:1rem;
+  }
+  .tags-modal-close:hover{ background:var(--bg); }
+  .tags-modal-search{ padding:0.9rem 1.4rem; border-bottom:1px solid var(--line); }
+  .tags-modal-search input{
+    width:100%; padding:0.6rem 0.9rem; border:1px solid var(--line); border-radius:8px;
+    font-family:inherit; font-size:0.88rem; outline:none;
+  }
+  .tags-modal-search input:focus{ border-color:var(--accent); }
+  .tags-modal-list{
+    padding:1rem 1.4rem; overflow-y:auto;
+    display:flex; flex-wrap:wrap; gap:0.5rem; align-content:flex-start;
+  }
+  .tags-modal-empty{ color:var(--ink-faint); font-size:0.85rem; padding:0.5rem 0.2rem; }
+  .tags-modal-footer{
+    padding:0.9rem 1.4rem; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .tags-modal-footer .clear-btn{
+    background:none; border:none; color:var(--accent); font-size:0.85rem;
+    cursor:pointer; font-family:inherit; padding:0;
+  }
+  .tags-modal-footer .result-count{ font-size:0.8rem; color:var(--ink-soft); }
 
   /* ---------- Carousel ---------- */
   .carousel-shell{ position:relative; }
@@ -258,6 +311,23 @@
   <footer id="footerText"></footer>
 </div>
 
+<div class="overlay" id="tagsOverlay">
+  <div class="tags-modal">
+    <div class="tags-modal-header">
+      <h3>Filtrar por descriptores</h3>
+      <button class="tags-modal-close" id="tagsModalClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="tags-modal-search">
+      <input id="tagsModalSearch" type="text" placeholder="Buscar un descriptor…" autocomplete="off">
+    </div>
+    <div class="tags-modal-list" id="tagsModalList"></div>
+    <div class="tags-modal-footer">
+      <button class="clear-btn" id="tagsModalClear">Limpiar selección</button>
+      <span class="result-count" id="tagsModalCount"></span>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =========================================================
    CONFIGURACIÓN
@@ -266,9 +336,6 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSHuwSgfsqvtnOu
 
 // Texto libre del pie de página.
 const FOOTER_TEXT = "Biblioteca Viajera · catálogo de libros de la colección";
-
-// Cuántas etiquetas (chips) mostrar como máximo, ordenadas por frecuencia.
-const MAX_CHIPS = 16;
 
 /* ========================================================= */
 
@@ -286,6 +353,12 @@ const el = {
   nextBtn: document.getElementById('nextBtn'),
   chipRecomendados: document.getElementById('chipRecomendados'),
   footerText: document.getElementById('footerText'),
+  tagsOverlay: document.getElementById('tagsOverlay'),
+  tagsModalSearch: document.getElementById('tagsModalSearch'),
+  tagsModalList: document.getElementById('tagsModalList'),
+  tagsModalClose: document.getElementById('tagsModalClose'),
+  tagsModalClear: document.getElementById('tagsModalClear'),
+  tagsModalCount: document.getElementById('tagsModalCount'),
 };
 
 let LIBROS = [];
@@ -308,8 +381,15 @@ function valorEn(fila, indice){
   if(indice < 0 || indice >= fila.length) return '';
   return (fila[indice] || '').toString().trim();
 }
-function detectarPortadaYEstado(fila){
-  let portada = '', estado = '';
+function detectarPortadaYEstado(fila, iPortadaNombrada, iEstadoNombrado){
+  // Si existen columnas con nombre explícito (Portada_URL, Estado...), se
+  // usan directamente. Si no, se cae al detector heurístico (por si el
+  // Sheet todavía tiene esas columnas sin encabezado de texto).
+  let portada = valorEn(fila, iPortadaNombrada);
+  let estado = valorEn(fila, iEstadoNombrado);
+
+  if(portada || estado) return { portada, estado };
+
   for(const celdaRaw of fila){
     const celda = (celdaRaw || '').toString().trim();
     if(!celda) continue;
@@ -361,11 +441,13 @@ async function cargarDatos(){
     const iSinopsis = indiceColumna(mapaHeaders, 'Sinopsis');
     const iDescriptores = indiceColumna(mapaHeaders, 'Descriptores', 'descriptores', 'tags', 'genero');
     const iRecomendado = indiceColumna(mapaHeaders, 'Recomendado', 'recomendada', 'recomendados');
+    const iPortadaNombrada = indiceColumna(mapaHeaders, 'Portada_URL', 'Portada URL', 'portada');
+    const iEstadoNombrado = indiceColumna(mapaHeaders, 'Estado portada', 'Estado_portada', 'estado');
 
     LIBROS = filas.slice(1)
       .filter(fila => valorEn(fila, iTitulo))
       .map((fila, i) => {
-        const { portada, estado } = detectarPortadaYEstado(fila);
+        const { portada, estado } = detectarPortadaYEstado(fila, iPortadaNombrada, iEstadoNombrado);
         return {
           titulo: valorEn(fila, iTitulo),
           autor: valorEn(fila, iAutor),
@@ -401,33 +483,74 @@ async function cargarDatos(){
   }
 }
 
+function todosLosTags(){
+  const set = new Set();
+  LIBROS.forEach(libro => tagsDe(libro).forEach(t => set.add(t)));
+  return [...set].sort((a,b) => a.localeCompare(b, 'es'));
+}
+
+function toggleTag(tag){
+  if(CHIPS_ACTIVOS.has(tag)) CHIPS_ACTIVOS.delete(tag);
+  else CHIPS_ACTIVOS.add(tag);
+  renderChips();
+  renderTagsModalList(el.tagsModalSearch.value);
+  aplicarFiltro(el.search.value);
+}
+
 function renderChips(){
-  const frecuencia = {};
-  LIBROS.forEach(libro => {
-    tagsDe(libro).forEach(tag => {
-      const clave = tag; // conservamos el texto original para mostrar
-      frecuencia[clave] = (frecuencia[clave] || 0) + 1;
-    });
-  });
-
-  const top = Object.entries(frecuencia)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0, MAX_CHIPS)
-    .map(([tag]) => tag);
-
   el.chips.innerHTML = '';
-  top.forEach(tag => {
+
+  // Pastillas de los tags actualmente activos, con una "x" para sacarlos
+  [...CHIPS_ACTIVOS].forEach(tag => {
     const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = tag;
-    btn.addEventListener('click', () => {
-      if(CHIPS_ACTIVOS.has(tag)) CHIPS_ACTIVOS.delete(tag);
-      else CHIPS_ACTIVOS.add(tag);
-      btn.classList.toggle('active');
-      aplicarFiltro(el.search.value);
-    });
+    btn.className = 'chip chip-active-tag';
+    btn.innerHTML = `${tag} <span class="x">×</span>`;
+    btn.addEventListener('click', () => toggleTag(tag));
     el.chips.appendChild(btn);
   });
+
+  // Botón para abrir el modal con la lista completa de descriptores
+  const abrirBtn = document.createElement('button');
+  abrirBtn.className = 'chip chip-more';
+  abrirBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    ${CHIPS_ACTIVOS.size ? 'Editar descriptores' : 'Filtrar por descriptores'}
+  `;
+  abrirBtn.addEventListener('click', abrirModalTags);
+  el.chips.appendChild(abrirBtn);
+}
+
+function abrirModalTags(){
+  el.tagsOverlay.classList.add('open');
+  el.tagsModalSearch.value = '';
+  renderTagsModalList('');
+  el.tagsModalSearch.focus();
+}
+
+function cerrarModalTags(){
+  el.tagsOverlay.classList.remove('open');
+}
+
+function renderTagsModalList(query){
+  const q = normalizar(query);
+  const todos = todosLosTags().filter(t => !q || normalizar(t).includes(q));
+
+  el.tagsModalList.innerHTML = '';
+  if(todos.length === 0){
+    el.tagsModalList.innerHTML = `<div class="tags-modal-empty">No hay descriptores que coincidan con "${query}".</div>`;
+  } else {
+    todos.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'chip' + (CHIPS_ACTIVOS.has(tag) ? ' active' : '');
+      btn.textContent = tag;
+      btn.addEventListener('click', () => toggleTag(tag));
+      el.tagsModalList.appendChild(btn);
+    });
+  }
+
+  el.tagsModalCount.textContent = CHIPS_ACTIVOS.size
+    ? `${CHIPS_ACTIVOS.size} seleccionado${CHIPS_ACTIVOS.size===1?'':'s'}`
+    : 'Ninguno seleccionado';
 }
 
 function aplicarFiltro(q){
@@ -539,19 +662,21 @@ el.chipRecomendados.addEventListener('click', () => {
 
 el.footerText.textContent = FOOTER_TEXT;
 
+el.tagsModalClose.addEventListener('click', cerrarModalTags);
+el.tagsOverlay.addEventListener('click', (e) => { if(e.target === el.tagsOverlay) cerrarModalTags(); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') cerrarModalTags(); });
+el.tagsModalSearch.addEventListener('input', (e) => renderTagsModalList(e.target.value));
+el.tagsModalClear.addEventListener('click', () => {
+  CHIPS_ACTIVOS.clear();
+  renderChips();
+  renderTagsModalList(el.tagsModalSearch.value);
+  aplicarFiltro(el.search.value);
+});
+
 cargarDatos();
 </script>
 
 </body>
 </html>
 
-  
-   
-   
-
-
-    
-  
- 
-      
  
