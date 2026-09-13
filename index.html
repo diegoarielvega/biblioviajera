@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<header>
-  <div>
-    <img src="LOGO BIBLIOTECA VIAJERA.png" alt="Biblioteca Viajera" class="logo-header">
-    <div class="subcount" id="count"></div>
-  </div>
-</header>
-  
+<title>Biblioteca Viajera — Catálogo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -46,23 +40,17 @@
 
   .wrap{ max-width:1180px; margin:0 auto; padding:2rem 1.5rem 4rem; }
 
-header{
-  display:flex; flex-direction:column; align-items:center;
-  gap:0.6rem; margin-bottom:1.4rem; text-align:center;
-}
+  header{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:1rem; margin-bottom:1.4rem;
+  }
+
   h1{
     font-family:'Open Sans', sans-serif;
     font-weight:700;
     font-size:1.6rem;
     margin:0;
-    
-.logo-header{
-  max-width:260px;
-  width:100%;
-  height:auto;
-  display:block;
-  margin:0 auto;
-}
+  }
 
   .subcount{ font-size:0.85rem; color:var(--ink-soft); margin-top:0.2rem; }
 
@@ -691,6 +679,7 @@ cargarDatos();
 </body>
 </html>
 
+ 
  
 
  
